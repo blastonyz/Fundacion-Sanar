@@ -1,6 +1,22 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+@font-face {
+  font-family: 'False';
+  src: url('/fonts/False.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'EASPORTS';
+  src: url('/fonts/EASPORTS15.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -146,4 +162,14 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* False font for titles and headings */
+h1, h2, h3, h4, h5, h6, .hero-title, .header-title {
+  font-family: 'False', sans-serif;
+}
+
+.font-title {
+  font-family: 'EASPORTS', sans-serif;
+  letter-spacing: 0.1em;
 }

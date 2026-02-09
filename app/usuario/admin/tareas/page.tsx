@@ -1,10 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import React from "react"
 import { useState, useEffect } from "react"
-import Image from "next/image"
-import { CheckSquare, ArrowLeft, Users, Clock, Filter, Plus, AlertCircle, LayoutDashboard, Wallet, DollarSign, Check } from "lucide-react"
+import { CheckSquare, Clock, Filter, Plus, AlertCircle, Check } from "lucide-react"
 import TaskForm from "./components/TaskForm"
 import ExpenseDropdown from "./components/ExpenseDropdown"
 import TaskList from "./components/TaskList"
@@ -135,6 +133,15 @@ export default function TareasPage() {
     setIsTaskModalOpen(true)
   }
 
+  const deleteTask = (taskId: string) => {
+    // Remove task from local state immediately for better UX
+    setTasks(prevTasks => {
+      const updatedTasks = prevTasks.filter(task => task._id !== taskId)
+      calculateStats(updatedTasks)
+      return updatedTasks
+    })
+  }
+
   const handleTaskFormSuccess = () => {
     fetchTasks()
   }
@@ -150,46 +157,19 @@ export default function TareasPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <div className="animate-pulse space-y-4 w-full max-w-md px-4">
-          <div className="h-8 bg-foreground/10 rounded-2xl w-3/4"></div>
-          <div className="space-y-3">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-20 bg-foreground/10 rounded-2xl"></div>
-            ))}
-          </div>
-        </div>
+      <div className="px-4 space-y-6">
+        <div className="text-white">Cargando tareas...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-24">
-      {/* Background Image */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
-        <Image
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjkjuDNs-2KtVnkaqzWmIadZD7VbW3z8-teaGV4JM51KW68hg8uljZqAz78rAIatTOdld2TYn67VGJt-NBboGkPK3kwuIqr1dDMT06G9EgTVAI1MyHmJe2nWsl3VuPOp0iH0851mCxu55akvtQnLsN_tf5o8BG1hxKUyDdVzQFBa9OlMRAUg3qJqLNuKOIR0e4X_sIiCb3u6NtaXNJp8tPZDsIp1MbfS5aSn0bpalXGNZkhxGs_GBAiaptSfKdtAVwI3OppXRECxE"
-          alt="Nature background"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background/90" />
-      </div>
-
-      {/* Header */}
-      <header className="relative z-20 px-6 pt-12 pb-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/usuario/task-manager"
-            className="w-10 h-10 rounded-full bg-foreground/10 hover:bg-foreground/20 flex items-center justify-center transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-black text-foreground">Tareas</h1>
-            <p className="text-xs text-primary font-bold uppercase tracking-widest">Gestión de Tareas</p>
-          </div>
+    <div className="px-4 space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between px-2">
+        <div>
+          <h2 className="text-2xl font-black text-white">Tareas</h2>
+          <p className="text-xs text-[#13ec5b] font-bold uppercase tracking-widest">Gestión de Tareas</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Expense Button */}
@@ -206,10 +186,10 @@ export default function TareasPage() {
             <Plus className="w-5 h-5" />
           </button>
         </div>
-      </header>
+      </div>
 
       {/* Stats Summary */}
-      <section className="relative z-10 px-4 mb-6">
+      <section>
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
           <div className="glass-card flex-shrink-0 w-36 p-4 rounded-3xl border-primary/20 bg-primary/5">
             <CheckSquare className="w-5 h-5 text-primary mb-2" />
@@ -235,7 +215,7 @@ export default function TareasPage() {
       </section>
 
       {/* Filters */}
-      <section className="relative z-10 px-4 mb-6">
+      <section>
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
           <select
             value={selectedStatus}
@@ -260,7 +240,7 @@ export default function TareasPage() {
       </section>
 
       {/* Tasks List */}
-      <section className="relative z-10 px-4 space-y-3 mb-24">
+      <section className="space-y-3 mb-24">
         <div className="flex items-center justify-between px-2 mb-4">
           <h2 className="text-lg font-bold">Lista de Tareas ({filteredTasks.length})</h2>
         </div>
@@ -269,6 +249,8 @@ export default function TareasPage() {
           tasks={filteredTasks}
           onToggleTask={toggleTask}
           onEditTask={editTask}
+          onDeleteTask={deleteTask}
+          onRefresh={fetchTasks}
         />
       </section>
 
@@ -279,28 +261,6 @@ export default function TareasPage() {
         onSuccess={handleTaskFormSuccess}
         editingTask={editingTask}
       />
-
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-background/90 backdrop-blur-md border-t border-foreground/10">
-        <div className="flex justify-around items-center py-3 px-6 max-w-md mx-auto">
-          <Link href="/usuario/task-manager" className="flex flex-col items-center gap-1 text-foreground/40 hover:text-foreground/60 transition-colors">
-            <LayoutDashboard className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Panel</span>
-          </Link>
-          <Link href="/usuario/gastos" className="flex flex-col items-center gap-1 text-foreground/40 hover:text-foreground/60 transition-colors">
-            <Wallet className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Gastos</span>
-          </Link>
-          <button className="flex flex-col items-center gap-1 text-primary">
-            <CheckSquare className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Tareas</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-foreground/40 hover:text-foreground/60 transition-colors">
-            <Users className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Ajustes</span>
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

@@ -26,9 +26,11 @@ interface TaskListProps {
   tasks: Task[]
   onToggleTask: (taskId: string) => void
   onEditTask: (task: Task) => void
+  onDeleteTask: (taskId: string) => void
+  onRefresh?: () => void
 }
 
-export default function TaskList({ tasks, onToggleTask, onEditTask }: TaskListProps) {
+export default function TaskList({ tasks, onToggleTask, onEditTask, onDeleteTask, onRefresh }: TaskListProps) {
   const getPriorityText = (priority: string) => {
     switch (priority) {
       case 'high': return 'Alta'
@@ -63,13 +65,18 @@ export default function TaskList({ tasks, onToggleTask, onEditTask }: TaskListPr
       const result = await response.json()
 
       if (result.success) {
-        // Refresh page or notify parent to refetch
-        window.location.reload()
+        // Notify parent component to update the task list
+        onDeleteTask(taskId)
+        if (onRefresh) {
+          onRefresh()
+        }
       } else {
-        console.error('Error deleting task:', result.error)
+        // Show user-friendly error message
+        alert(`Error al eliminar la tarea: ${result.error}`)
       }
     } catch (error) {
       console.error('Error:', error)
+      alert('Error de conexión al eliminar la tarea. Inténtalo de nuevo.')
     }
   }
 

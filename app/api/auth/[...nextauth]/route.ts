@@ -3,6 +3,8 @@ import type { AuthOptions, User as NextAuthUser } from "next-auth"
 import type { JWT } from "next-auth/jwt"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
+import { MongoDBAdapter } from "@next-auth/mongodb-adapter"
+import { MongoClient } from "mongodb"
 import connectDB from '@/lib/mongodb'
 import { createOAuthUser, findUserByEmail, updateUserImage } from '@/lib/user-helpers'
 import User from '@/models/User'
@@ -31,7 +33,15 @@ declare module "next-auth/jwt" {
   }
 }
 
+// MongoDB client para el adapter con configuración personalizada
+const client = new MongoClient(process.env.MONGODB_URI!)
+const clientPromise = client.connect()
+
 export const authOptions: AuthOptions = {
+  // Para uso interno, JWT es más flexible que database sessions
+  // y evita problemas de vinculación de cuentas OAuth
+  // adapter: MongoDBAdapter(clientPromise), // Deshabilitado temporalmente
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -79,7 +89,19 @@ export const authOptions: AuthOptions = {
     })
   ],
   session: {
-    strategy: "jwt",
+    strategy: "jwt", // Vuelta a JWT para evitar problemas de vinculación OAuth
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
+  },
+  // Eventos para depuración
+  events: {
+    async signIn({ user, account, profile, isNewUser }) {
+      console.log('🎉 Evento signIn exitoso:', { 
+        email: user.email,
+        provider: account?.provider,
+        isNewUser 
+      })
+    }
   },
   callbacks: {
     async jwt({ token, user, account }) {
@@ -150,10 +172,12 @@ export const authOptions: AuthOptions = {
               throw createError;
             }
           } else {
-            console.log('♻️ Usando usuario existente')
-            // Usuario existente, usar su rol
+            console.log('♻️ Usuario existente encontrado - permitiendo OAuth')
+            // Usuario existente, usar sus datos y permitir OAuth
             user.role = existingUser.role || 'user'
             user.id = existingUser._id.toString()
+            user.email = existingUser.email // Asegurar email
+            user.name = existingUser.name // Usar nombre existente
             
             // Actualizar imagen si cambió usando helper
             if (user.image && existingUser.image !== user.image) {
@@ -161,6 +185,9 @@ export const authOptions: AuthOptions = {
               await updateUserImage(existingUser._id.toString(), user.image)
               console.log('🖼️ Imagen actualizada')
             }
+            
+            // ✅ Permitir OAuth para usuario existente forzando el éxito
+            console.log('🔗 Permitiendo OAuth para usuario existente con credentials')
           }
           
           console.log('✅ SignIn OAuth exitoso para:', user.email)

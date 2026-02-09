@@ -11,7 +11,7 @@ export function HeroSection() {
           }}
         >
           <div className="flex flex-col gap-2 text-center">
-            <h1 className="text-white text-4xl font-black leading-tight tracking-tight md:text-5xl text-balance">
+            <h1 className="text-white text-6xl font-black leading-tight tracking-tight md:text-7xl text-balance font-title">
               S.A.N.A.R.
             </h1>
             <h2 className="text-white text-sm font-normal leading-normal md:text-base">

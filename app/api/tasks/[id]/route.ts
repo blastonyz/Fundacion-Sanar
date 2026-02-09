@@ -6,11 +6,12 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectDB();
-    const task = await Task.findById(params.id)
+    const task = await Task.findById(id)
       .populate('createdBy', 'name email')
       .populate('assignedTo', 'name email');
     
@@ -41,9 +42,10 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(
@@ -59,7 +61,7 @@ export async function PATCH(
     const body = await request.json();
     
     const task = await Task.findByIdAndUpdate(
-      params.id,
+      id,
       body,
       { new: true, runValidators: true }
     )
@@ -93,9 +95,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(
@@ -119,7 +122,7 @@ export async function DELETE(
     }
 
     await connectDB();
-    const task = await Task.findByIdAndDelete(params.id);
+    const task = await Task.findByIdAndDelete(id);
     
     if (!task) {
       return NextResponse.json(

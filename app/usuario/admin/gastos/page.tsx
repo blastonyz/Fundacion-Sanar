@@ -1,9 +1,7 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ChevronLeft, Search, Plus, TrendingUp, CalendarDays, LayoutDashboard, Wallet, CheckSquare, Users } from 'lucide-react';
+import { Search, Plus, TrendingUp, CalendarDays } from 'lucide-react';
 
 interface Expense {
   _id: string;
@@ -26,12 +24,8 @@ interface ApiResponse {
 }
 
 export default function ExpensesPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('Todo');
   const [currentMonth, setCurrentMonth] = useState('');
 
@@ -57,20 +51,8 @@ export default function ExpensesPage() {
   };
 
   useEffect(() => {
-    if (status === 'loading') return;
-    
-    if (!session) {
-      router.push('/acceso');
-      return;
-    }
-    
-    if (session.user.role !== 'admin') {
-      router.push('/usuario/user-panel');
-      return;
-    }
-    
     fetchExpenses();
-  }, [session, status, router]);
+  }, []);
 
   // Calcular estadísticas
   const totalExpenses = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
@@ -110,44 +92,28 @@ export default function ExpensesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#102216] flex items-center justify-center">
+      <div className="px-4 space-y-6">
         <div className="text-white">Cargando gastos...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-24">
-      {/* Background Decoration */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute top-1/4 -left-20 w-64 h-64 bg-[#13ec5b]/20 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-1/4 -right-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px]"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a3a25] to-[#102216]" />
+    <div className="px-4 space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between px-2">
+        <div>
+          <h2 className="text-2xl font-black text-white">Historial de Gastos</h2>
+          <p className="text-xs text-[#13ec5b] font-bold uppercase tracking-widest">Fundación S.A.N.A.R.</p>
+        </div>
+        <button className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+          <Search className="w-5 h-5" />
+        </button>
       </div>
 
-      {/* Header */}
-      <header className="relative z-20 px-6 pt-12 pb-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div 
-            className="w-10 h-10 rounded-full bg-foreground/10 hover:bg-foreground/20 flex items-center justify-center transition-colors cursor-pointer"
-            onClick={() => router.push('/usuario/admin')}
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-white">Historial de Gastos</h1>
-            <p className="text-xs text-[#13ec5b] font-bold uppercase tracking-widest">Fundación S.A.N.A.R.</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="w-10 h-10 rounded-full bg-foreground/10 hover:bg-foreground/20 flex items-center justify-center transition-colors">
-            <Search className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
       {/* Stats Summary */}
-      <section className="relative z-10 px-4 mb-6">
-        <div className="bg-white/5 backdrop-blur-[12px] border border-white/10 rounded-xl p-6 relative overflow-hidden group">
+      <section>
+        <div className="bg-[rgba(25,51,34,0.45)] backdrop-blur-[20px] border border-white/10 rounded-3xl p-6 relative overflow-hidden group">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-[#13ec5b]/10 rounded-full blur-3xl group-hover:bg-[#13ec5b]/20 transition-all duration-700"></div>
           <p className="text-white/60 text-sm font-medium mb-1">Total Acumulado ({currentMonth})</p>
           <div className="flex items-baseline gap-2">
@@ -165,7 +131,7 @@ export default function ExpensesPage() {
       </section>
 
       {/* Filters */}
-      <section className="relative z-10 px-4 mb-6">
+      <section>
         <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
             {categories.map((category) => (
               <button 
@@ -173,7 +139,7 @@ export default function ExpensesPage() {
                 className={`flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full px-4 ${
                   selectedCategory === category.name 
                     ? 'bg-[#13ec5b] text-[#102216]' 
-                    : 'bg-white/5 border border-white/10 text-white'
+                    : 'bg-[rgba(25,51,34,0.45)] backdrop-blur-[20px] border border-white/10 text-white'
                 }`}
                 onClick={() => setSelectedCategory(category.name)}
               >
@@ -184,8 +150,8 @@ export default function ExpensesPage() {
       </section>
 
       {/* Date Display */}
-      <section className="relative z-10 px-4 mb-4">
-        <div className="bg-white/5 backdrop-blur-[12px] border border-white/10 flex justify-between items-center px-4 py-3 rounded-lg">
+      <section>
+        <div className="bg-[rgba(25,51,34,0.45)] backdrop-blur-[20px] border border-white/10 flex justify-between items-center px-4 py-3 rounded-2xl">
           <div className="flex items-center gap-2">
             <CalendarDays className="text-[#13ec5b]" size={18} />
             <p className="text-white/70 text-xs font-medium">Periodo de visualización</p>
@@ -195,7 +161,7 @@ export default function ExpensesPage() {
       </section>
 
       {/* List of Expenses */}
-      <section className="relative z-10 px-4 space-y-3 mb-24">
+      <section className="space-y-3 mb-24">
         <div className="flex items-center justify-between px-2 mb-4">
           <h3 className="text-white text-lg font-bold leading-tight tracking-tight">Registros Detallados</h3>
           <span className="text-[#13ec5b] text-[10px] font-bold bg-[#13ec5b]/10 px-2 py-0.5 rounded border border-[#13ec5b]/20">
@@ -204,7 +170,7 @@ export default function ExpensesPage() {
         </div>
 
         {expenses.length === 0 ? (
-          <div className="bg-white/5 backdrop-blur-[12px] border border-white/10 p-8 rounded-xl text-center">
+          <div className="bg-[rgba(25,51,34,0.45)] backdrop-blur-[20px] border border-white/10 p-8 rounded-3xl text-center">
             <p className="text-white/60">No hay gastos registrados</p>
           </div>
         ) : (
@@ -218,7 +184,7 @@ export default function ExpensesPage() {
               };
 
               return (
-                <div key={expense._id} className="bg-white/5 backdrop-blur-[12px] border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-[#13ec5b]/30 transition-all">
+                <div key={expense._id} className="bg-[rgba(25,51,34,0.45)] backdrop-blur-[20px] border border-white/10 p-4 rounded-2xl flex items-center justify-between group hover:border-[#13ec5b]/30 transition-all">
                   <div className="flex items-center gap-4">
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center border ${colorClasses[categoryColor as keyof typeof colorClasses] || colorClasses.gray}`}>
                       <span className="text-2xl">{getCategoryIcon(expense.category || '')}</span>
@@ -232,7 +198,7 @@ export default function ExpensesPage() {
                           {expense.category ? expense.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Sin categoría'}
                         </span>
                         <span className="w-1 h-1 rounded-full bg-white/20"></span>
-                        <span>Por: {expense.createdBy?.name || session?.user?.name}</span>
+                        <span>Por: {expense.createdBy?.name}</span>
                       </div>
                     </div>
                   </div>
@@ -249,38 +215,10 @@ export default function ExpensesPage() {
       {/* Floating Action Button */}
       <button 
         className="fixed bottom-24 right-6 w-14 h-14 bg-[#13ec5b] rounded-full shadow-[0_0_20px_rgba(19,236,91,0.3)] flex items-center justify-center text-[#102216] active:scale-90 transition-transform z-50"
-        onClick={() => router.push('/usuario/admin')}
+        onClick={() => window.location.href = '/usuario/admin'}
       >
         <Plus size={24} className="font-bold" />
       </button>
-
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-background/90 backdrop-blur-md border-t border-foreground/10">
-        <div className="flex justify-around items-center py-3 px-6 max-w-md mx-auto">
-          <button 
-            className="flex flex-col items-center gap-1 text-foreground/40 hover:text-foreground/60 transition-colors"
-            onClick={() => router.push('/usuario/admin')}
-          >
-            <LayoutDashboard className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Panel</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-primary">
-            <Wallet className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Gastos</span>
-          </button>
-          <button 
-            className="flex flex-col items-center gap-1 text-foreground/40 hover:text-foreground/60 transition-colors"
-            onClick={() => router.push('/usuario/tareas')}
-          >
-            <CheckSquare className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Tareas</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-foreground/40 hover:text-foreground/60 transition-colors">
-            <Users className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Ajustes</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

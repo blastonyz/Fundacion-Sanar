@@ -1,22 +1,47 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import SignOutButton from '../../components/SignOutButton';
 
-export default async function UsuarioLayout({
+export default function UsuarioLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
-  
-  // Proteger toda la sección usuario
-  if (!session || !session.user) {
-    redirect('/acceso');
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (status === 'loading') return;
+    
+    if (!session) {
+      router.push('/acceso');
+      return;
+    }
+  }, [session, status, router]);
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Cargando...</div>
+      </div>
+    );
   }
+
+  if (!session || !session.user) {
+    return null;
+  }
+
+  // Si es una ruta admin, solo renderizar children sin layout adicional
+  const isAdminRoute = pathname.startsWith('/usuario/admin');
   
-  console.log('🔐 Usuario autenticado accediendo a sección protegida:', session.user.email);
+  if (isAdminRoute) {
+    return <>{children}</>;
+  }
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -29,12 +54,6 @@ export default async function UsuarioLayout({
               </h1>
               
               <nav className="flex space-x-4">
-                <Link 
-                  href="/usuario"
-                  className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100"
-                >
-                  Dashboard
-                </Link>
                 
                 {/* Mostrar Admin Panel solo para administradores */}
                 {session.user.role === 'admin' ? (
@@ -45,12 +64,9 @@ export default async function UsuarioLayout({
                     Admin Panel
                   </Link>
                 ) : (
-                  <Link 
-                    href="/usuario/user-panel"
-                    className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100"
-                  >
-                    Mi Panel
-                  </Link>
+                  < >
+                    
+                  </>
                 )}
               </nav>
             </div>

@@ -28,6 +28,16 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Todo');
   const [currentMonth, setCurrentMonth] = useState('');
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Estado para nuevo gasto
+  const [newExpense, setNewExpense] = useState({
+    description: '',
+    amount: '',
+    category: 'botanicos'
+  });
 
   // Establecer la fecha en el cliente para evitar errores de hidratación
   useEffect(() => {
@@ -54,6 +64,48 @@ export default function ExpensesPage() {
     fetchExpenses();
   }, []);
 
+  // Función para agregar nuevo gasto
+  const addExpense = async () => {
+    if (!newExpense.description.trim() || !newExpense.amount) {
+      setError('Descripción y monto son requeridos');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+      
+      const expenseData = {
+        description: newExpense.description.trim(),
+        amount: parseFloat(newExpense.amount),
+        category: newExpense.category,
+      };
+
+      const response = await fetch('/api/expenses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(expenseData),
+      });
+
+      const result: ApiResponse = await response.json();
+
+      if (result.success && result.data) {
+        setExpenses([result.data as Expense, ...expenses]);
+        setNewExpense({ description: '', amount: '', category: 'botanicos' });
+        setShowExpenseForm(false);
+      } else {
+        setError(result.error || 'Error al registrar gasto');
+      }
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      setError('Error de conexión al registrar gasto');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // Calcular estadísticas
   const totalExpenses = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
 
@@ -62,7 +114,10 @@ export default function ExpensesPage() {
     { name: 'Todo', color: 'primary' },
     { name: 'Botánicos', color: 'emerald' },
     { name: 'Talleres', color: 'blue' },
-    { name: 'Mantenimiento', color: 'amber' }
+    { name: 'Mantenimiento', color: 'amber' },
+    { name: 'Aceites', color: 'emerald' },
+    { name: 'Semillas', color: 'emerald' },
+    { name: 'Insumos', color: 'emerald' }
   ];
 
   // Iconos por categoría
@@ -100,6 +155,13 @@ export default function ExpensesPage() {
 
   return (
     <div className="px-4 space-y-6">
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/30 rounded-2xl p-4 text-red-200">
+          {error}
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex items-center justify-between px-2">
         <div>
@@ -148,6 +210,74 @@ export default function ExpensesPage() {
             ))}
           </div>
       </section>
+
+      {/* Formulario Nuevo Gasto */}
+      {showExpenseForm && (
+        <section className="bg-[rgba(25,51,34,0.45)] backdrop-blur-[20px] border border-white/10 p-6 rounded-3xl space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Plus className="text-[#13ec5b]" size={20} />
+            <h2 className="font-bold font-title">Nuevo Gasto</h2>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1.5 ml-1">
+                Descripción
+              </label>
+              <input 
+                className="w-full h-11 bg-white/5 border border-white/10 rounded-2xl px-4 text-sm text-white focus:border-[#13ec5b] focus:ring-1 focus:ring-[#13ec5b] placeholder:text-white/20" 
+                placeholder="Ej: Aceites esenciales" 
+                type="text"
+                value={newExpense.description}
+                onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1.5 ml-1">
+                Monto ($)
+              </label>
+              <input 
+                className="w-full h-11 bg-white/5 border border-white/10 rounded-2xl px-4 text-sm text-white focus:border-[#13ec5b] focus:ring-1 focus:ring-[#13ec5b] placeholder:text-white/20" 
+                placeholder="0.00" 
+                type="number"
+                value={newExpense.amount}
+                onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1.5 ml-1">
+                Categoría
+              </label>
+              <select 
+                className="w-full h-11 bg-white/5 border border-white/10 rounded-2xl px-4 text-sm text-white focus:border-[#13ec5b] focus:ring-1 focus:ring-[#13ec5b]"
+                value={newExpense.category}
+                onChange={(e) => setNewExpense({...newExpense, category: e.target.value})}
+              >
+                <option value="botanicos">Botánicos</option>
+                <option value="talleres">Talleres</option>
+                <option value="mantenimiento">Mantenimiento</option>
+                <option value="aceites">Aceites</option>
+                <option value="semillas">Semillas</option>
+                <option value="insumos-de-cultivo">Insumos de Cultivo</option>
+              </select>
+            </div>
+            <div className="flex gap-3">
+              <button 
+                className="flex-1 h-11 bg-white/10 text-white border border-white/20 font-bold rounded-2xl active:scale-95 transition-all text-sm uppercase" 
+                onClick={() => setShowExpenseForm(false)}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="flex-1 h-11 bg-[#13ec5b] text-[#102216] font-black rounded-2xl shadow-lg shadow-[#13ec5b]/20 active:scale-95 transition-all text-sm uppercase disabled:opacity-50" 
+                onClick={addExpense}
+                disabled={submitting}
+              >
+                {submitting ? 'Registrando...' : 'Registrar'}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Date Display */}
       <section>
@@ -215,9 +345,9 @@ export default function ExpensesPage() {
       {/* Floating Action Button */}
       <button 
         className="fixed bottom-24 right-6 w-14 h-14 bg-[#13ec5b] rounded-full shadow-[0_0_20px_rgba(19,236,91,0.3)] flex items-center justify-center text-[#102216] active:scale-90 transition-transform z-50"
-        onClick={() => window.location.href = '/usuario/admin'}
+        onClick={() => setShowExpenseForm(!showExpenseForm)}
       >
-        <Plus size={24} className="font-bold" />
+        <Plus size={24} className="font-bold" style={{ transform: showExpenseForm ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
       </button>
     </div>
   );
